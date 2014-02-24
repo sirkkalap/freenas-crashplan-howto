@@ -1,4 +1,4 @@
-# How-to : Crashplan & Freenas 
+# How-to : Crashplan & Freenas
 
 Pre-requisites
 
@@ -80,7 +80,7 @@ Change the service port to 4200, which we will use to tunnel to the remote conne
 servicePort=4200
 ```
 
-### Step 6 : Verify connection
+### Step 6 : Verify Crashplan is running and listening
 
 ```
 [root@freenas] ~# jexec crashplan_1 sockstat -4
@@ -92,6 +92,6 @@ root     java       3952  57 tcp4   *:4242                *:*
 root     java       3951  56 tcp4   127.0.0.1:4243        *:*
 ...
 ```
-### Step 6: Connect with Crashplan UI
+### Step 7: Connect with Crashplan UI
 
 Launch the modified Crashplan UI (port 4200). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
