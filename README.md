@@ -95,3 +95,7 @@ root     java       3951  56 tcp4   127.0.0.1:4243        *:*
 ### Step 7: Connect with Crashplan UI
 
 Launch the modified Crashplan UI (port 4200). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
+
+## Update to 3.6.3
+
+After update to 3.6.3 (happens automatically, pushed from Crashplan) the service fails to start. Thanks to mstinaff thread: http://forums.freenas.org/index.php?threads/crashplan-3-6-3.18416/ we now have a working solution to this.
