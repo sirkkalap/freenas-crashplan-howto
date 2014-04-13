@@ -22,8 +22,10 @@ Plugins --> Install Crashplan
 
 Enable the sshd. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
 
-Open terminal to _jail_ and edit /etc/rc.config
+Open terminal to _jail_
 ![Edit jail:/etc/rc.config](p4.png)
+
+and edit /etc/rc.config
 ```
 ...
 sshd_enable="YES"
