@@ -20,7 +20,15 @@ Plugins --> Install Crashplan
 
 ### Step 4 : Create a sshd user for the crashplan jail, enable TCP forwarding
 
-Enable sshd [the wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
+Enable the sshd. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
+
+Open terminal to _jail_ and edit /etc/rc.config
+![Edit jail:/etc/rc.config](p4.png)
+```
+...
+sshd_enable="YES"
+...
+```
 
 Create User for ssh-access
 ```
