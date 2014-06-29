@@ -18,7 +18,11 @@ Plugins --> Install Crashplan
 ### Step 3 : Enable Crashplan plugin
 ![Turn on service](p3.png)
 
-### Step 4 : Create a sshd user for the crashplan jail, enable TCP forwarding
+### Step 4 : Create a sshd user for the Crashplan jail, enable TCP forwarding
+
+To configure the Crashplan running inside a FreeNAS jail we need to use another machine that has graphical user interface. The jail has no user interface, only text console. Below is an overview of the connection that lets us use another machines GUI to configure the server running inside headless jail.
+
+![Overview of the connection](overview.png)
 
 To login to jail when no sshd is available in it you must either a) use jexec command on FreeNAS console or b) use the jail console in FreeNAS WebUI.
 
