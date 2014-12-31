@@ -89,6 +89,7 @@ Start the sshd manually this once:
 ```
 root@crashplan_1:/ # service sshd start
 ...
+```
 
 At this point, I like to copy my pub key to make things easier on me. The 192.168.1.103 here is the IP of the crashplan jail.
 You must first find the IP of the jail itself (not the FreeNAS box).  You can find this in the Jails menu.  In this case the instructions show it as `192.168.1.103`:
@@ -150,6 +151,20 @@ Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be 
 
 You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 
-## Update to 3.6.3
+## Common Problems
+
+### Update to 3.6.3
 
 After update to 3.6.3 (happens automatically, pushed from Crashplan) the service fails to start. Thanks to mstinaff thread: http://forums.freenas.org/index.php?threads/crashplan-3-6-3.18416/ we now have a working solution to this.
+
+### Cannot connect to crashplan jail over ssh
+
+Sometimes the `sshd` service needs to be restarted.  This is easy:
+
+```sh
+[root@freenas] ~# jls
+   JID  IP Address      Hostname                      Path
+     1  -               crashplan_1                   /mnt/zpool/jails_2/crashplan_1
+[root@freenas] ~# jexec 1 /bin/tcsh
+root@crashplan_1:/ # service sshd restart
+```
