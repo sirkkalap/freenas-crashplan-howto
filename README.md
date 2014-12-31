@@ -105,6 +105,24 @@ Now, let's create a tunnel. This will redirect my laptop port 4200 to port 4243 
 [me@mylaptop] ~$ ssh -L 4200:127.0.0.1:4243 crashplan@192.168.1.103 -N -v -v
 ```
 
+I prefer to use a script that I can run.  Add a file called `/usr/local/bin/crashplan` with the following content:
+
+```sh
+#!/bin/bash
+
+# Port forward to FreeNAS for Crashplan plugin
+
+SERVICE_PORT=`cat /Applications/CrashPlan.app/Contents/Resources/Java/conf/ui.properties | grep servicePort | egrep -v '#' | awk -F "=" '{print $2}'`
+
+CRASHPLAN_USER="crashplan"
+CRASHPLAN_JAIL=192.168.1.2
+echo "Connecting on Service Port: $SERVICE_PORT"
+echo "Expecting Crashplan FreeNAS Jail at: $CRASHPLAN_USER@$CRASHPLAN_JAIL"
+
+# Connect to crashplan
+ssh -L $SERVICE_PORT:127.0.0.1:4243 $CRASHPLAN_USER@$CRASHPLAN_JAIL -N
+```
+
 
 ### Step 5 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
 
