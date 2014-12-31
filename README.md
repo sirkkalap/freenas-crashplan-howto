@@ -20,25 +20,38 @@ Plugins --> Install Crashplan
 ### Step 3 : Enable Crashplan plugin
 ![Turn on service](p4.png)
 
-### Step 4 : Create a sshd user for the crashplan jail, enable TCP forwarding
+### Step 4 : Create a sshd user for the Crashplan jail, enable TCP forwarding
 
-Enable sshd [the wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
+To configure the Crashplan running inside a FreeNAS jail we need to use another machine that has graphical user interface. The jail has no user interface, only text console. Below is an overview of the connection that lets us use another machines GUI to configure the server running inside headless jail.
 
-Create User for ssh-access by first logging into the jail:
+![Overview of the connection](overview.png)
 
-```sh
-freenas# jls
+To login to jail when no sshd is available in it you must either a) use jexec command on FreeNAS console or b) use the jail console in FreeNAS WebUI.
+
+a) Connect to jail. If you are on FreeNAS login. Note that the JID may be different.
+```
+[root@freenas] ~# jls
    JID  IP Address      Hostname                      Path
-     1  -               pluginjail                    /mnt/archive/jails/pluginjail
-     2  -               crashplan_1                   /mnt/archive/jails/crashplan_1
-     3  -               crashplan_2                   /mnt/archive/jails/crashplan_2
-freenas# jexec 3 /bin/tcsh
+     1  -               crashplan_1                   /mnt/zpool/jails_2/crashplan_1
+[root@freenas] ~# jexec 1 /bin/tcsh
 ```
 
-Now create a new user using the `adduser` command:
+b) Open terminal to _jail_ from WebUI
+![Edit jail:/etc/rc.conf](p4.png)
 
-```sh
-root@crashplan_2:/ # adduser
+Enable the sshd. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
+
+Edit /etc/rc.conf
+```
+...
+sshd_enable="YES"
+...
+```
+Create User for ssh-access
+
+Create a new user, note that the user needs to be in group `wheel`.
+```
+root@crashplan_1:/ # adduser
 Username: crashplan
 Full name: 
 Uid (Leave empty for default): 1001
@@ -71,25 +84,40 @@ Add another user? (yes/no): no
 Goodbye!
 ```
 
-At this point, I like to copy my pub key to make things easier on me.  You must first find the IP of the jail itself (not the FreeNAS box).  You can find this in the Jails menu.  In this case the instructions show it as `192.168.1.103`:
+Start the sshd manually this once:
 
 ```
-local:~$ brew install ssh-copy-id
-local:~$ ssh-copy-id crashplan@192.168.1.103
+root@crashplan_1:/ # service sshd start
+...
+
+At this point, I like to copy my pub key to make things easier on me. The 192.168.1.103 here is the IP of the crashplan jail.
+You must first find the IP of the jail itself (not the FreeNAS box).  You can find this in the Jails menu.  In this case the instructions show it as `192.168.1.103`:
+
+```
+[me@mylaptop] ~$ brew install ssh-copy-id
+[me@mylaptop] ~$ ssh-copy-id crashplan@192.168.1.103
 ```
 
-Now, let's create a tunnel. This will redirect localhost 4200 to 4243 on the crashplan jail.
+Now, let's create a tunnel. This will redirect my laptop port 4200 to port 4243 on the crashplan jail. The console will stay open, you may close it when you are done with the step 7.
 
 ```
-local:~$ ssh -L 4200:127.0.0.1:4243 crashplan@192.168.1.103 -N -v -v
+[me@mylaptop] ~$ ssh -L 4200:127.0.0.1:4243 crashplan@192.168.1.103 -N -v -v
 ```
 
 
 ### Step 5 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
 
+This is done _on your desktop machine_ (for me it was my laptop), that you use to configure the crashplan service running in the FreeNAS jail.
+
 See [crashplan's documentation](http://support.crashplan.com/doku.php/how_to/configure_a_headless_client)
 
-Set up a ssh tunnel by editing the ui properties file. ui.properties file location
+Configure the desktop (my laptop) to use the ssh tunnel by editing the `ui.properties` file.
+Make a backup of the file, if you use the Crashplan on the desktop machine too. This change will divert the
+connections to port 4200, so it will not work without the ssh-tunnel and it will not connec to local crashplan
+any more.
+
+
+You may find the `ui.properties` file in the following location:
 
 ```
 Linux (if installed as root): /usr/local/crashplan/conf/ui.properties
@@ -118,7 +146,9 @@ root     java       3951  56 tcp4   127.0.0.1:4243        *:*
 ```
 ### Step 7: Connect with Crashplan UI
 
-Launch the modified Crashplan UI (port 4200). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
+Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
+
+You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 
 ## Update to 3.6.3
 
