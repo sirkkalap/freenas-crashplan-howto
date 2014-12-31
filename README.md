@@ -24,42 +24,64 @@ Plugins --> Install Crashplan
 
 Enable sshd [the wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
 
-Create User for ssh-access
-```
-[root@freenas] /mnt/zpool# jls
+Create User for ssh-access by first logging into the jail:
+
+```sh
+freenas# jls
    JID  IP Address      Hostname                      Path
-     1  -               crashplan_1                   /mnt/zpool/jails_2/crashplan_1
-[root@freenas] /mnt/zpool# jexec 1 /bin/tcsh
+     1  -               pluginjail                    /mnt/archive/jails/pluginjail
+     2  -               crashplan_1                   /mnt/archive/jails/crashplan_1
+     3  -               crashplan_2                   /mnt/archive/jails/crashplan_2
+freenas# jexec 3 /bin/tcsh
 ```
-Create a new user
-```
-root@crashplan_1:/ # adduser
+
+Now create a new user using the `adduser` command:
+
+```sh
+root@crashplan_2:/ # adduser
 Username: crashplan
-.....
+Full name: 
+Uid (Leave empty for default): 1001
+Login group [crashplan]: 
 Login group is crashplan. Invite crashplan into other groups? []: wheel
-....
+Login class [default]: 
+Shell (sh csh tcsh nologin) [sh]: tcsh
+Home directory [/home/crashplan]: 
+Home directory permissions (Leave empty for default): 
+Use password-based authentication? [yes]: 
+Use an empty password? (yes/no) [no]: 
+Use a random password? (yes/no) [no]: 
+Enter password: 
+Enter password again: 
+Lock out the account after creation? [no]: 
 Username   : crashplan
 Password   : *****
-Full Name  :
+Full Name  : 
 Uid        : 1001
-Class      :
+Class      : 
 Groups     : crashplan wheel
 Home       : /home/crashplan
-Home Mode  :
+Home Mode  : 
 Shell      : /bin/tcsh
 Locked     : no
+OK? (yes/no): yes
+pw: mkdir(/home/crashplan): No such file or directory
+adduser: INFO: Successfully added (crashplan) to the user database.
+Add another user? (yes/no): no
+Goodbye!
 ```
 
-At this point, I like to copy my pub key to make things easier on me.
+At this point, I like to copy my pub key to make things easier on me.  You must first find the IP of the jail itself (not the FreeNAS box).  You can find this in the Jails menu.  In this case the instructions show it as `192.168.1.103`:
 
 ```
-➜  ~  ssh-copy-id crashplan@192.168.1.103
+local:~$ brew install ssh-copy-id
+local:~$ ssh-copy-id crashplan@192.168.1.103
 ```
 
 Now, let's create a tunnel. This will redirect localhost 4200 to 4243 on the crashplan jail.
 
 ```
-ssh -L 4200:127.0.0.1:4243 crashplan@192.168.1.103 -N -v -v
+local:~$ ssh -L 4200:127.0.0.1:4243 crashplan@192.168.1.103 -N -v -v
 ```
 
 
