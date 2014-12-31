@@ -145,7 +145,20 @@ root     java       3952  57 tcp4   *:4242                *:*
 root     java       3951  56 tcp4   127.0.0.1:4243        *:*
 ...
 ```
-### Step 7: Connect with Crashplan UI
+
+### Step 7: Mount storage directories
+
+From the FreeNAS GUI you must configure the storage for the jail so that you can back up the filesystem.  This can be done if you go to:
+
+```
+Jails -> crashplan_1 -> Storage -> Add Storage
+```
+
+You must put in the root `Source` and `Destination` directory and set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
+
+![Crashplan Storage](p5.png)
+
+### Step 8: Connect with Crashplan UI
 
 Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
 
