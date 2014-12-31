@@ -160,6 +160,10 @@ You must put in the root `Source` and `Destination` directory and set it to `Rea
 
 ### Step 8: Connect with Crashplan UI
 
+First download and install the crashplan desktop application.  Make sure the client (desktop application) is the same version as the plugin.  In our case we want both to be 3.6.X.
+
+https://www.code42.com/crashplan/download/
+
 Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
 
 You may close the ssh-tunnel at this point when the Crashplan UI is closed.
