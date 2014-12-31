@@ -12,11 +12,13 @@ Pre-requisites
 Plugins --> Install Crashplan
 ![Crashplan plugin](p1.png)
 
+![Installing plugin](p2.png)
+
 ### Step 2 : Accept TOS
-![TOS](p2.png)
+![TOS](p3.png)
 
 ### Step 3 : Enable Crashplan plugin
-![Turn on service](p3.png)
+![Turn on service](p4.png)
 
 ### Step 4 : Create a sshd user for the crashplan jail, enable TCP forwarding
 
