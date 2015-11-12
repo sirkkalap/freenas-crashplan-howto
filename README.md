@@ -133,8 +133,36 @@ echo "Expecting Crashplan FreeNAS Jail at: $CRASHPLAN_USER@$CRASHPLAN_JAIL"
 ssh -L $SERVICE_PORT:127.0.0.1:4243 $CRASHPLAN_USER@$CRASHPLAN_JAIL -N
 ```
 
+### Step 5 : Verify Crashplan is running and listening
 
-### Step 5 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
+```
+[root@freenas] ~# jexec crashplan_1 sockstat -4
+USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
+crashplan sshd      4149  5  tcp4   192.168.1.103:22      192.168.1.83:53226
+root     sshd       4147  5  tcp4   192.168.1.103:22      192.168.1.83:53226
+root     java       3952  56 tcp4   127.0.0.1:4243        *:*
+root     java       3952  57 tcp4   *:4242                *:*
+root     java       3951  56 tcp4   127.0.0.1:4243        *:*
+...
+```
+
+### Step 6: Mount storage directories
+
+From the FreeNAS GUI you must configure the storage for the jail so that you can back up the filesystem.  This can be done if you go to:
+
+```
+Jails -> crashplan_1 -> Storage -> Add Storage
+```
+
+You must put in the root `Source` and `Destination` directory and set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
+
+![Crashplan Storage](p5.png)
+
+### Step 7 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
+
+First download and install the crashplan desktop application.  
+
+https://www.code42.com/crashplan/download/
 
 This is done _on your desktop machine_ (for me it was my laptop), that you use to configure the crashplan service running in the FreeNAS jail.
 
@@ -161,38 +189,18 @@ Change the service port to 4200, which we will use to tunnel to the remote conne
 servicePort=4200
 ```
 
-### Step 6 : Verify Crashplan is running and listening
-
-```
-[root@freenas] ~# jexec crashplan_1 sockstat -4
-USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
-crashplan sshd      4149  5  tcp4   192.168.1.103:22      192.168.1.83:53226
-root     sshd       4147  5  tcp4   192.168.1.103:22      192.168.1.83:53226
-root     java       3952  56 tcp4   127.0.0.1:4243        *:*
-root     java       3952  57 tcp4   *:4242                *:*
-root     java       3951  56 tcp4   127.0.0.1:4243        *:*
-...
-```
-
-### Step 7: Mount storage directories
-
-From the FreeNAS GUI you must configure the storage for the jail so that you can back up the filesystem.  This can be done if you go to:
-
-```
-Jails -> crashplan_1 -> Storage -> Add Storage
-```
-
-You must put in the root `Source` and `Destination` directory and set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
-
-![Crashplan Storage](p5.png)
-
 ### Step 8: Connect with Crashplan UI
 
-First download and install the crashplan desktop application.  Make sure the client (desktop application) is the same version as the plugin, because even though they are supposed to auto update to the latest version, if there is a difference it will not work. 
+Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Immediatly after you login the UI will exit and the crasplan plugin will start the update process. This process in incremental, that means that the crasplan plugin will restart itself many times, until reaching the latest version.
 
-https://www.code42.com/crashplan/download/
+You can see how the version numbers increase with
+```
+tail -f /usr/pbi/crashplan-amd64/share/crashplan/log/app.log | grep CPVERSION
+```
 
-Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
+Once the update is complete, make sure the client (desktop application) is the same version as the plugin, because even though they are supposed to auto update to the latest version, if there is a difference it will not work. 
+
+Now login again and configure.
 
 You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 
