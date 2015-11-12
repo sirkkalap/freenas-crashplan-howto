@@ -3,11 +3,11 @@
 Pre-requisites
 
 * [Crashplan account (free)](http://www.crashplan.com/)
-* FreeNAS-9.2.1-RELEASE-x64
+* FreeNAS-9.3-RELEASE-x64
 
 ## Install
 
-### Step 1: Install the Crashplan plugin version 3.5.3_1
+### Step 1: Install the Crashplan plugin
 
 Plugins --> Install Crashplan
 ![Crashplan plugin](p1.png)
@@ -39,12 +39,22 @@ a) Connect to jail. If you are on FreeNAS login. Note that the JID may be differ
 b) Open terminal to _jail_ from WebUI
 ![Edit jail:/etc/rc.conf](p4.png)
 
+Install bash [(it is required during the crashplan automatic updates)](https://bugs.freenas.org/issues/12375)
+```
+pkg refresh
+pkg install bash
+
+# crashplan is expecting bash to be in /bin
+ln -s /usr/local/bin/bash /bin/bash
+```
+
 Enable the sshd. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
 
 Edit /etc/rc.conf
 ```
 ...
 sshd_enable="YES"
+crashplan_enable="YES
 ...
 ```
 Create User for ssh-access
