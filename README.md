@@ -189,7 +189,7 @@ Change the service port to 4200, which we will use to tunnel to the remote conne
 servicePort=4200
 ```
 
-### Step 8: Connect with Crashplan UI
+### Step 8: Connect with Crashplan UI and update.
 
 Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Immediatly after you login the UI will exit and the crasplan plugin will start the update process. This process in incremental, that means that the crasplan plugin will restart itself many times, until reaching the latest version.
 
@@ -200,7 +200,18 @@ tail -f /usr/pbi/crashplan-amd64/share/crashplan/log/app.log | grep CPVERSION
 
 Once the update is complete, make sure the client (desktop application) is the same version as the plugin, because even though they are supposed to auto update to the latest version, if there is a difference it will not work. 
 
-Now login again and configure.
+### Step 9: Copy the authentication token required after the update
+
+Follow the instruction in this [*Step 1*](http://support.code42.com/CrashPlan/4/Configuring/Using_CrashPlan_On_A_Headless_Computer#Step_1:_Copy_The_Authentication_Token)
+
+You can find the plugin token here
+```
+cat /var/lib/crashplan/.ui_info
+```
+
+### Step 10: Connect with Crashplan UI...Finally!
+
+Now launch the UI client, login and configure your backups.
 
 You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 
