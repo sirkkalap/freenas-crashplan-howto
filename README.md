@@ -48,7 +48,7 @@ pkg install bash
 ln -s /usr/local/bin/bash /bin/bash
 ```
 
-Enable the sshd. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
+Enable sshd and crashplan. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
 
 Edit /etc/rc.conf
 ```
