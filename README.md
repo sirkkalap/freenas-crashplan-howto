@@ -188,7 +188,7 @@ You must put in the root `Source` and `Destination` directory and set it to `Rea
 
 ### Step 8: Connect with Crashplan UI
 
-First download and install the crashplan desktop application.  Make sure the client (desktop application) is the same version as the plugin.  In our case we want both to be 3.6.X.
+First download and install the crashplan desktop application.  Make sure the client (desktop application) is the same version as the plugin, because even though they are supposed to auto update to the latest version, if there is a difference it will not work. 
 
 https://www.code42.com/crashplan/download/
 
