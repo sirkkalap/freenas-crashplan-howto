@@ -3,11 +3,11 @@
 Pre-requisites
 
 * [Crashplan account (free)](http://www.crashplan.com/)
-* FreeNAS-9.2.1-RELEASE-x64
+* FreeNAS-9.3-RELEASE-x64
 
 ## Install
 
-### Step 1: Install the Crashplan plugin version 3.5.3_1
+### Step 1: Install the Crashplan plugin
 
 Plugins --> Install Crashplan
 ![Crashplan plugin](p1.png)
@@ -39,12 +39,22 @@ a) Connect to jail. If you are on FreeNAS login. Note that the JID may be differ
 b) Open terminal to _jail_ from WebUI
 ![Edit jail:/etc/rc.conf](p4.png)
 
-Enable the sshd. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
+Install bash [(it is required during the crashplan automatic updates)](https://bugs.freenas.org/issues/12375)
+```
+pkg refresh
+pkg install bash
+
+# crashplan is expecting bash to be in /bin
+ln -s /usr/local/bin/bash /bin/bash
+```
+
+Enable sshd and crashplan. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
 
 Edit /etc/rc.conf
 ```
 ...
 sshd_enable="YES"
+crashplan_enable="YES
 ...
 ```
 Create User for ssh-access
@@ -123,8 +133,36 @@ echo "Expecting Crashplan FreeNAS Jail at: $CRASHPLAN_USER@$CRASHPLAN_JAIL"
 ssh -L $SERVICE_PORT:127.0.0.1:4243 $CRASHPLAN_USER@$CRASHPLAN_JAIL -N
 ```
 
+### Step 5 : Verify Crashplan is running and listening
 
-### Step 5 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
+```
+[root@freenas] ~# jexec crashplan_1 sockstat -4
+USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
+crashplan sshd      4149  5  tcp4   192.168.1.103:22      192.168.1.83:53226
+root     sshd       4147  5  tcp4   192.168.1.103:22      192.168.1.83:53226
+root     java       3952  56 tcp4   127.0.0.1:4243        *:*
+root     java       3952  57 tcp4   *:4242                *:*
+root     java       3951  56 tcp4   127.0.0.1:4243        *:*
+...
+```
+
+### Step 6: Mount storage directories
+
+From the FreeNAS GUI you must configure the storage for the jail so that you can back up the filesystem.  This can be done if you go to:
+
+```
+Jails -> crashplan_1 -> Storage -> Add Storage
+```
+
+You must put in the root `Source` and `Destination` directory and set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
+
+![Crashplan Storage](p5.png)
+
+### Step 7 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
+
+First download and install the crashplan desktop application.  
+
+https://www.code42.com/crashplan/download/
 
 This is done _on your desktop machine_ (for me it was my laptop), that you use to configure the crashplan service running in the FreeNAS jail.
 
@@ -151,38 +189,29 @@ Change the service port to 4200, which we will use to tunnel to the remote conne
 servicePort=4200
 ```
 
-### Step 6 : Verify Crashplan is running and listening
+### Step 8: Connect with Crashplan UI and update.
 
+Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Immediatly after you login the UI will exit and the crasplan plugin will start the update process. This process in incremental, that means that the crasplan plugin will restart itself many times, until reaching the latest version.
+
+You can see how the version numbers increase with
 ```
-[root@freenas] ~# jexec crashplan_1 sockstat -4
-USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
-crashplan sshd      4149  5  tcp4   192.168.1.103:22      192.168.1.83:53226
-root     sshd       4147  5  tcp4   192.168.1.103:22      192.168.1.83:53226
-root     java       3952  56 tcp4   127.0.0.1:4243        *:*
-root     java       3952  57 tcp4   *:4242                *:*
-root     java       3951  56 tcp4   127.0.0.1:4243        *:*
-...
+tail -f /usr/pbi/crashplan-amd64/share/crashplan/log/app.log | grep CPVERSION
 ```
 
-### Step 7: Mount storage directories
+Once the update is complete, make sure the client (desktop application) is the same version as the plugin, because even though they are supposed to auto update to the latest version, if there is a difference it will not work. 
 
-From the FreeNAS GUI you must configure the storage for the jail so that you can back up the filesystem.  This can be done if you go to:
+### Step 9: Copy the authentication token required after the update
 
+Follow the instruction in this [*Step 1*](http://support.code42.com/CrashPlan/4/Configuring/Using_CrashPlan_On_A_Headless_Computer#Step_1:_Copy_The_Authentication_Token)
+
+You can find the plugin token here
 ```
-Jails -> crashplan_1 -> Storage -> Add Storage
+cat /var/lib/crashplan/.ui_info
 ```
 
-You must put in the root `Source` and `Destination` directory and set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
+### Step 10: Connect with Crashplan UI...Finally!
 
-![Crashplan Storage](p5.png)
-
-### Step 8: Connect with Crashplan UI
-
-First download and install the crashplan desktop application.  Make sure the client (desktop application) is the same version as the plugin.  In our case we want both to be 3.6.X.
-
-https://www.code42.com/crashplan/download/
-
-Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Login and configure. Quit UI and enjoy versioned backups to and from your FreeNAS.
+Now launch the UI client, login and configure your backups.
 
 You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 
