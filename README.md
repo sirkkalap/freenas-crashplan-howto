@@ -255,5 +255,5 @@ root@crashplan_1:/ # service sshd restart
 ```
 
 ## Authors
-Original Author: Petri Sirkkala
-Contributor: Federico Castagnini
+* Original Author: Petri Sirkkala
+* Contributor: Federico Castagnini
