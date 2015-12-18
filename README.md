@@ -12,15 +12,12 @@ Pre-requisites
 Plugins --> Install Crashplan
 ![Crashplan plugin](p1.png)
 
-![Installing plugin](p2.png)
-
 ### Step 2 : Accept TOS
-![TOS](p3.png)
+![TOS](p2.png)
 
-### Step 3 : Enable Crashplan plugin
-![Turn on service](p4.png)
 
-### Step 4 : Create a sshd user for the Crashplan jail, enable TCP forwarding
+### Step 3 : Create a sshd user for the Crashplan jail, enable TCP forwarding
+![Open terminal](p4.png)
 
 To configure the Crashplan running inside a FreeNAS jail we need to use another machine that has graphical user interface. The jail has no user interface, only text console. Below is an overview of the connection that lets us use another machines GUI to configure the server running inside headless jail.
 
@@ -94,7 +91,7 @@ Add another user? (yes/no): no
 Goodbye!
 ```
 
-Start the sshd manually this once:
+Start the sshd manually:
 
 ```
 root@crashplan_1:/ # service sshd start
@@ -132,6 +129,9 @@ echo "Expecting Crashplan FreeNAS Jail at: $CRASHPLAN_USER@$CRASHPLAN_JAIL"
 # Connect to crashplan
 ssh -L $SERVICE_PORT:127.0.0.1:4243 $CRASHPLAN_USER@$CRASHPLAN_JAIL -N
 ```
+
+### Step 4 : Enable Crashplan plugin
+![StartService](p3.png)
 
 ### Step 5 : Verify Crashplan is running and listening
 
