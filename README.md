@@ -253,3 +253,7 @@ Sometimes the `sshd` service needs to be restarted.  This is easy:
 [root@freenas] ~# jexec 1 /bin/tcsh
 root@crashplan_1:/ # service sshd restart
 ```
+
+## Authors
+Original Author: Petri Sirkkala
+Contributor: Federico Castagnini
