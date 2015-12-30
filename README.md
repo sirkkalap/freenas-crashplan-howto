@@ -257,11 +257,6 @@ root@crashplan_1:/ # service sshd restart
 
 Open an issue. We'll try to get back to you with a workaround, or update the documentation.
 
-## I ran into a problem during setup. How do I document and share my experience?
-
-Open an issue. We'll try to get back to you with a workaround, or update the documentation.
-
-
 ## Authors
 * Original Author: Petri Sirkkala
 * Contributor: Federico Castagnini
