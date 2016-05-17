@@ -49,7 +49,7 @@ root@crashplan_1:/ # sysrc crashplan_enable=YES
 root@crashplan_1:/ # sysrc linux_enable=YES
 ```
 
-Mock the kernels version to meet the [Crashplan requirements](http://support.code42.com/CrashPlan/4/Getting_Started/Code42_CrashPlan_System_Requirements)
+Mock the kernel version to meet the [Crashplan requirements](http://support.code42.com/CrashPlan/4/Getting_Started/Code42_CrashPlan_System_Requirements)
 ```
 root@crashplan_1:/ # echo "compat.linux.osrelease=2.6.32" >> /etc/sysctl.conf
 root@crashplan_1:/ # sysctl compat.linux.osrelease=2.6.32
