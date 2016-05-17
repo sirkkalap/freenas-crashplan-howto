@@ -3,7 +3,7 @@
 Pre-requisites
 
 * [Crashplan account (free)](http://www.crashplan.com/)
-* FreeNAS-9.3-RELEASE-x64
+* FreeNAS-9.3-RELEASE-x64 or older
 
 ## Install
 
@@ -36,25 +36,26 @@ b) Open terminal to _jail_ from WebUI
 
 Install bash [(it is required during the crashplan automatic updates)](https://bugs.freenas.org/issues/12375)
 ```
-pkg refresh
-pkg install bash
+root@crashplan_1:/ # pkg refresh
+root@crashplan_1:/ # pkg install bash
 
 # crashplan is expecting bash to be in /bin
-ln -s /usr/local/bin/bash /bin/bash
+root@crashplan_1:/ # ln -s /usr/local/bin/bash /bin/bash
 ```
 
-Enable sshd and crashplan. The instructions below are taken from [the FreeNAS wiki](http://doc.freenas.org/index.php/Adding_Jails#Accessing_the_Command_Line_of_a_Jail)
-
-Edit /etc/rc.conf
+Enable sshd and crashplan.
 ```
-...
-sshd_enable="YES"
-crashplan_enable="YES
-...
+root@crashplan_1:/ # sysrc crashplan_enable=YES
+root@crashplan_1:/ # sysrc linux_enable=YES
 ```
-Create User for ssh-access
 
-Create a new user, note that the user needs to be in group `wheel`.
+Mock the kernels version to meet the [Crashplan requirements](http://support.code42.com/CrashPlan/4/Getting_Started/Code42_CrashPlan_System_Requirements)
+```
+root@crashplan_1:/ # echo "compat.linux.osrelease=2.6.32" >> /etc/sysctl.conf
+root@crashplan_1:/ # sysctl compat.linux.osrelease=2.6.32
+```
+
+Create a new user for ssh-access, note that the user needs to be in group `wheel`.
 ```
 root@crashplan_1:/ # adduser
 Username: crashplan
@@ -204,7 +205,7 @@ Follow the instruction in this [*Step 1*](http://support.code42.com/CrashPlan/4/
 
 You can find the plugin token here
 ```
-cat /var/lib/crashplan/.ui_info
+root@crashplan_1:/ # cat /var/lib/crashplan/.ui_info
 ```
 
 ### Step 10: Connect with Crashplan UI...Finally!
@@ -213,9 +214,15 @@ Now launch the UI client, login and configure your backups.
 
 You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 
+## Other considerations
+
+### Large Backup File Selections
+
+If you are backing up more than 1 TB or 1 million files, please review [additional technical information](http://support.code42.com/CrashPlan/4/Troubleshooting/Adjusting_CrashPlan_Settings_For_Memory_Usage_With_Large_Backups).
+
 ## Common Problems
 
-### Update to 3.6.3
+### Update to 3.6.3 ( I think this is not necessary anymore)
 
 After update to 3.6.3 (happens automatically, pushed from Crashplan) the service fails to start. Thanks to mstinaff thread: http://forums.freenas.org/index.php?threads/crashplan-3-6-3.18416/ we now have a working solution to this.
 
@@ -242,6 +249,10 @@ GUI_JAVA_OPTS="-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.PollSelectorP
 
 Finally, you need to stop and start the jail.  Without doing this the plugin will not start correctly.
 
+### Manualy update to 4.7.0
+
+The Freenas forum user mastax figure out how to do a [very simple manual update](https://forums.freenas.org/index.php?threads/crashplan-not-updating.40374/#post-254182).
+
 ### Cannot connect to crashplan jail over ssh
 
 Sometimes the `sshd` service needs to be restarted.  This is easy:
@@ -253,6 +264,12 @@ Sometimes the `sshd` service needs to be restarted.  This is easy:
 [root@freenas] ~# jexec 1 /bin/tcsh
 root@crashplan_1:/ # service sshd restart
 ```
+
+### I am not able to connect to the system remotely via GUI anymore
+
+Make sure the versions of the crashplan client (GUI) and the service running in Freenas match, they have to be exactly the same.
+
+Alternatively, logging into [CrashPlan online](https://www.crashplan.com/account/login.vtl) to manage the account provides many relevant functions that one would want to perform via GUI. Effectively, it's a cloud version of the GUI allowing granular configuration changes on any client associated with the account. Once the FreeNAS is up and running and registered to the account, all management can take place via web. (Source [Slovak](https://forums.freenas.org/index.php?threads/crashplan-not-updating.40374/#post-256017))
 
 ## I ran into a problem during setup. How do I document and share my experience?
 
