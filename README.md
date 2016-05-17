@@ -254,6 +254,7 @@ Finally, you need to stop and start the jail.  Without doing this the plugin wil
 ### Manualy update to 4.7.0
 
 The Freenas forum user mastax figure out how to do a [very simple manual update](https://forums.freenas.org/index.php?threads/crashplan-not-updating.40374/#post-254182).
+I just tried it with 4.7.0 and it worked.
 
 ### Cannot connect to crashplan jail over ssh
 
