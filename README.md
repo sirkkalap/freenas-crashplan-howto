@@ -36,7 +36,7 @@ b) Open terminal to _jail_ from WebUI
 
 Install bash [(it is required during the crashplan automatic updates)](https://bugs.freenas.org/issues/12375)
 ```
-root@crashplan_1:/ # pkg refresh
+root@crashplan_1:/ # pkg update
 root@crashplan_1:/ # pkg install bash
 
 # crashplan is expecting bash to be in /bin
@@ -46,7 +46,9 @@ root@crashplan_1:/ # ln -s /usr/local/bin/bash /bin/bash
 Enable sshd and crashplan.
 ```
 root@crashplan_1:/ # sysrc crashplan_enable=YES
+crashplan_enable: NO -> YES
 root@crashplan_1:/ # sysrc linux_enable=YES
+linux_enable: NO -> YES
 ```
 
 Mock the kernel version to meet the [Crashplan requirements](http://support.code42.com/CrashPlan/4/Getting_Started/Code42_CrashPlan_System_Requirements)
