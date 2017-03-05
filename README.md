@@ -34,29 +34,6 @@ a) Connect to jail. If you are on FreeNAS login. Note that the JID may be differ
 b) Open terminal to _jail_ from WebUI
 ![Edit jail:/etc/rc.conf](p4.png)
 
-Install bash [(it is required during the crashplan automatic updates)](https://bugs.freenas.org/issues/12375)
-```
-root@crashplan_1:/ # pkg update
-root@crashplan_1:/ # pkg install bash
-
-# crashplan is expecting bash to be in /bin
-root@crashplan_1:/ # ln -s /usr/local/bin/bash /bin/bash
-```
-
-Enable sshd and crashplan.
-```
-root@crashplan_1:/ # sysrc crashplan_enable=YES
-crashplan_enable: NO -> YES
-root@crashplan_1:/ # sysrc linux_enable=YES
-linux_enable: NO -> YES
-```
-
-Mock the kernel version to meet the [Crashplan requirements](http://support.code42.com/CrashPlan/4/Getting_Started/Code42_CrashPlan_System_Requirements)
-```
-root@crashplan_1:/ # echo "compat.linux.osrelease=2.6.32" >> /etc/sysctl.conf
-root@crashplan_1:/ # sysctl compat.linux.osrelease=2.6.32
-```
-
 Create a new user for ssh-access, note that the user needs to be in group `wheel`.
 ```
 root@crashplan_1:/ # adduser
@@ -131,10 +108,96 @@ echo "Expecting Crashplan FreeNAS Jail at: $CRASHPLAN_USER@$CRASHPLAN_JAIL"
 ssh -L $SERVICE_PORT:127.0.0.1:4243 $CRASHPLAN_USER@$CRASHPLAN_JAIL -N
 ```
 
-### Step 4 : Enable Crashplan plugin
+### Step 4 : Configure Linux emulation
+
+Upgrade base system.
+```
+root@crashplan_1:/ # pkg update
+root@crashplan_1:/ # pkg upgrade
+```
+
+Enable Linux emulation, sshd and crashplan.
+```
+root@crashplan_1:/ # sysrc crashplan_enable=YES
+crashplan_enable: NO -> YES
+root@crashplan_1:/ # sysrc linux_enable=YES
+linux_enable: NO -> YES
+root@crashplan_1:/ # sysrc sshd_enable=YES
+sshd_enable: NO -> YES
+```
+
+Install userspace layer for Linux compatibility. Otherwise DNS resolution will not work and UTF-8 filenames will be corrupted.
+```
+root@crashplan_1:/ # pkg install emulators/linux_base-c6
+```
+
+**You must now restart the jail from Web-UI to make sure kernel modules are loaded.**
+
+Mock the kernel version to meet the [Crashplan requirements](http://support.code42.com/CrashPlan/4/Getting_Started/Code42_CrashPlan_System_Requirements)
+```
+root@crashplan_1:/ # echo "compat.linux.osrelease=2.6.32" >> /etc/sysctl.conf
+root@crashplan_1:/ # sysctl compat.linux.osrelease=2.6.32
+```
+
+Make sure linux emulation file system is mounted inside the jail. Otherwise you will see an warning like "Java HotSpot(TM) Client VM warning: Can't detect initial thread stack location - find_vma failed". 
+```
+[root@freenas] ~# mount -t devfs dev /mnt/storage/jails/crashplan_1/dev
+[root@freenas] ~# mount -t procfs proc /mnt/storage/jails/crashplan_1/proc
+[root@freenas] ~# mount -t linprocfs linproc /mnt/storage/jails/crashplan_1/compat/linux/proc
+```
+
+### Step 5 : Install Java 1.8
+
+Install Java.
+```
+root@crashplan_1:/ # cd ~/
+root@crashplan_1:/ # gzip -d jdk-8u121-linux-i586.tar.gz
+root@crashplan_1:/ # tar -xf jdk-8u121-linux-i586.tar
+root@crashplan_1:/ # cp jdk1.8.0_121/jre/lib/i386/jli/libjli.so /lib
+root@crashplan_1:/ # mv jdk1.8.0_121 linux-sun-jre1.8.0
+root@crashplan_1:/ # mv linux-sun-jre1.8.0 /usr/pbi/crashplan-amd64/
+root@crashplan_1:/ # /usr/bin/cpuset -l 0 /usr/pbi/crashplan-amd64/linux-sun-jre1.8.0/bin/java -version
+java version "1.8.0_121"
+Java(TM) SE Runtime Environment (build 1.8.0_121-b13)
+Java HotSpot(TM) Server VM (build 25.121-b13, mixed mode)
+```
+
+Update runtime Java version.
+```
+root@crashplan_1:/ # sed s/1.7.0/1.8.0/g /usr/local/share/crashplan/install.vars > install.vars
+root@crashplan_1:/ # mv install.vars /usr/local/share/crashplan/install.vars 
+```
+
+Install bash [(it is required during the crashplan automatic updates)](https://bugs.freenas.org/issues/12375)
+```
+root@crashplan_1:/ # pkg install bash
+
+# crashplan is expecting bash to be in /bin
+root@crashplan_1:/ # ln -s /usr/local/bin/bash /bin/bash
+```
+
+### Step 6 : Manually update Crashplan and enable Crashplan plugin
+
+Download latest CrashPlan version and extract.
+```
+root@crashplan_1:/ # cd /usr/pbi/crashplan-amd64/share/crashplan/
+root@crashplan_1:/ # wget --no-check-certificate https://download.code42.com/installs/linux/install/CrashPlan/CrashPlan_4.8.0_Linux.tgz
+root@crashplan_1:/ # tar -xf CrashPlan_4.8.0_Linux.tgz
+root@crashplan_1:/ # cpio -idv < CrashPlan_4.8.0.cpi
+root@crashplan_1:/ # cd ..
+root@crashplan_1:/ # cp -r crashplan-install/lib* .
+```
+
+Add some missing symlinks.
+```
+root@crashplan_1:/ # cd /usr/local/lib
+root@crashplan_1:/ # ln -s libintl.so.8.1.5 libintl.so.9
+root@crashplan_1:/ # ln -s libiconv.so.2.5.1 libiconv.so.3
+```
+
 ![StartService](p3.png)
 
-### Step 5 : Verify Crashplan is running and listening
+### Step 7 : Verify Crashplan is running and listening
 
 ```
 [root@freenas] ~# jexec crashplan_1 sockstat -4
@@ -147,7 +210,17 @@ root     java       3951  56 tcp4   127.0.0.1:4243        *:*
 ...
 ```
 
-### Step 6: Mount storage directories
+The service can be controlled as follows:
+
+```
+root@crashplan_1:/ service crashplan restart
+```
+or ...
+```
+root@crashplan_1:/ /usr/bin/cpuset -l 0 /usr/local/share/crashplan/bin/CrashPlanEngine restart
+```
+
+### Step 8: Mount storage directories
 
 From the FreeNAS GUI you must configure the storage for the jail so that you can back up the filesystem.  This can be done if you go to:
 
@@ -155,11 +228,11 @@ From the FreeNAS GUI you must configure the storage for the jail so that you can
 Jails -> crashplan_1 -> Storage -> Add Storage
 ```
 
-You must put in the root `Source` and `Destination` directory and set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
+You must put in the root `Source` and `Destination` directory and optionally set it to `Read-Only`.  The `Source` is the directory you wish to back up.  The `Destination` is the directory you want to mount it on so Crashplan can read it.  You select `Read-Only` to secure the data against anything in the jail trying to modify your files.  Here is an example:
 
 ![Crashplan Storage](p5.png)
 
-### Step 7 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
+### Step 9 : Configure Crashplan UI to connect to remote host (through ssh-tunnel)
 
 First download and install the crashplan desktop application.  
 
@@ -190,7 +263,7 @@ Change the service port to 4200, which we will use to tunnel to the remote conne
 servicePort=4200
 ```
 
-### Step 8: Connect with Crashplan UI and update.
+### Step 10: Connect with Crashplan UI and update.
 
 Launch the modified Crashplan UI on the desktop (my laptop). Ssh-tunnel must be open. Immediatly after you login the UI will exit and the crasplan plugin will start the update process. This process in incremental, that means that the crasplan plugin will restart itself many times, until reaching the latest version.
 
@@ -201,7 +274,7 @@ tail -f /usr/pbi/crashplan-amd64/share/crashplan/log/app.log | grep CPVERSION
 
 Once the update is complete, make sure the client (desktop application) is the same version as the plugin, because even though they are supposed to auto update to the latest version, if there is a difference it will not work. 
 
-### Step 9: Copy the authentication token required after the update
+### Step 11: Copy the authentication token required after the update
 
 Follow the instruction in this [*Step 1*](http://support.code42.com/CrashPlan/4/Configuring/Using_CrashPlan_On_A_Headless_Computer#Step_1:_Copy_The_Authentication_Token)
 
@@ -210,7 +283,7 @@ You can find the plugin token here
 root@crashplan_1:/ # cat /var/lib/crashplan/.ui_info
 ```
 
-### Step 10: Connect with Crashplan UI...Finally!
+### Step 12: Connect with Crashplan UI...Finally!
 
 Now launch the UI client, login and configure your backups.
 
@@ -223,38 +296,6 @@ You may close the ssh-tunnel at this point when the Crashplan UI is closed.
 If you are backing up more than 1 TB or 1 million files, please review [additional technical information](http://support.code42.com/CrashPlan/4/Troubleshooting/Adjusting_CrashPlan_Settings_For_Memory_Usage_With_Large_Backups).
 
 ## Common Problems
-
-### Update to 3.6.3 ( I think this is not necessary anymore)
-
-After update to 3.6.3 (happens automatically, pushed from Crashplan) the service fails to start. Thanks to mstinaff thread: http://forums.freenas.org/index.php?threads/crashplan-3-6-3.18416/ we now have a working solution to this.
-
-You need to manually update a file.  First make a backup:
-
-```sh
-root@crashplan_1:/ # cd /usr/pbi/crashplan-amd64/share/crashplan/bin
-root@crashplan_1:/usr/pbi/crashplan-amd64/share/crashplan/bin # cp -v run.conf run.conf.bkp
-```
-
-The original file for `/usr/pbi/crashplan-amd64/share/crashplan/bin/run.conf` looks like this:
-
-```
-SRV_JAVA_OPTS="-Dfile.encoding=UTF-8 -Dapp=CrashPlanService -DappBaseName=CrashPlan -Xms20m -Xmx1024m -Djava.net.preferIPv4Stack=true -Dsun.net.inetaddr.ttl=300 -Dnetworkaddress.cache.ttl=300 -Dsun.net.inetaddr.negative.ttl=0 -Dnetworkaddress.cache.negative.ttl=0 -Dc42.native.md5.enabled=false"
-GUI_JAVA_OPTS="-Dfile.encoding=UTF-8 -Dapp=CrashPlanDesktop -DappBaseName=CrashPlan -Xms20m -Xmx512m -Djava.net.preferIPv4Stack=true -Dsun.net.inetaddr.ttl=300 -Dnetworkaddress.cache.ttl=300 -Dsun.net.inetaddr.negative.ttl=0 -Dnetworkaddress.cache.negative.ttl=0 -Dc42.native.md5.enabled=false"
-```
-
-You will need to update it to look like this:
-
-```
-SRV_JAVA_OPTS="-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.PollSelectorProvider -Dfile.encoding=UTF-8 -Dapp=CrashPlanService -DappBaseName=CrashPlan -Xms20m -Xmx1024m -Djava.net.preferIPv4Stack=true -Dsun.net.inetaddr.ttl=300 -Dnetworkaddress.cache.ttl=300 -Dsun.net.inetaddr.negative.ttl=0 -Dnetworkaddress.cache.negative.ttl=0 -Dc42.native.md5.enabled=false"
-GUI_JAVA_OPTS="-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.PollSelectorProvider -Dfile.encoding=UTF-8 -Dapp=CrashPlanDesktop -DappBaseName=CrashPlan -Xms20m -Xmx512m -Djava.net.preferIPv4Stack=true -Dsun.net.inetaddr.ttl=300 -Dnetworkaddress.cache.ttl=300 -Dsun.net.inetaddr.negative.ttl=0 -Dnetworkaddress.cache.negative.ttl=0 -Dc42.native.md5.enabled=false"
-```
-
-Finally, you need to stop and start the jail.  Without doing this the plugin will not start correctly.
-
-### Manualy update to 4.7.0
-
-The Freenas forum user mastax figure out how to do a [very simple manual update](https://forums.freenas.org/index.php?threads/crashplan-not-updating.40374/#post-254182).
-I just tried it with 4.7.0 and it worked.
 
 ### Cannot connect to crashplan jail over ssh
 
@@ -281,3 +322,4 @@ Open an issue. We'll try to get back to you with a workaround, or update the doc
 ## Authors
 * Original Author: Petri Sirkkala
 * Contributor: Federico Castagnini
+* Contributor: Kyösti Herrala
